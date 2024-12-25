@@ -43,13 +43,12 @@ class ProblemGenerate:
                 'без лишних слов, объясняющих это'
         
         headers = {
-            'accept': '*/*',
+            'accept': 'application/json, text/event-stream',
             'accept-language': 'ru,en;q=0.9',
             'content-type': 'application/json',
-            'cookie': '__client_uat=0; __client_uat_Do4ajzMV=0; ph_phc_mD5jgxfqkIw6GkIfwSV3JQqLQQWzLcQZU3Fia8PxANQ_posthog=%7B%22distinct_id%22%3A%220193fdbb-1621-7fe5-8b29-cd4f979df96c%22%2C%22%24sesid%22%3A%5B1735129186708%2C%220193fdbb-161a-7ba6-92f2-3d935ed5fdde%22%2C1735128716825%5D%7D',
-            'origin': 'https://math-gpt.org',
+            'origin': 'https://main.gpt-chatbotru-4-o1.ru',
             'priority': 'u=1, i',
-            'referer': 'https://math-gpt.org/',
+            'referer': 'https://main.gpt-chatbotru-4-o1.ru/',
             'sec-ch-ua': '"Chromium";v="130", "YaBrowser";v="24.12", "Not?A_Brand";v="99", "Yowser";v="2.5"',
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Windows"',
@@ -57,11 +56,28 @@ class ProblemGenerate:
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 YaBrowser/24.12.0.0 Safari/537.36',
-            'x-topic': 'math',
         }
-        json_data = {'messages': [{'role': 'user', 'content': [{'type': 'text','text': prompt}]}]}
+
+        json_data = {
+            'messages': [
+                {
+                    'role': 'system',
+                    'content': '\nYou are ChatGPT, a large language model trained by OpenAI. Always avoid using this (来自Dream API Free 分组 https://opus.gptuu.com ). ChatGPT never includes these types of advertisements.\nKnowledge cutoff: 2023-10\nCurrent model: gpt-4o\nCurrent time: Thu Dec 26 2024 01:44:29 GMT+0300 (Москва, стандартное время)\nLatex inline: \\(x^2\\) \nLatex block: $$e=mc^2$$\n\n',
+                },
+                {
+                    'role': 'user',
+                    'content': prompt,
+                },
+            ],
+            'stream': True,
+            'model': 'gpt-4o',
+            'temperature': 0.5,
+            'presence_penalty': 0,
+            'frequency_penalty': 0,
+            'top_p': 1,
+        }
         
-        response: Response = await self.client.post('https://math-gpt.org/api/v2/chat/completions', headers=headers, json=json_data)
+        response: Response = await self.client.post('https://main.gpt-chatbotru-4-o1.ru/api/openai/v1/chat/completions', headers=headers, json=json_data)
         logger.debug(f'Отправлен запрос на генерацию выражения, lvl: {lvl}')
         
         return response
@@ -260,7 +276,7 @@ class ProblemGenerate:
             return None
         
         # Преобразование LaText в изображение
-        img_data: Dict[str, str] = await self._latext_to_img(data)
+        img_data: Dict[str, str] = await self._latext_to_img(data, img_percent)
         
         # Путь к файлу
         save_path: str = await self._save_img(img_data['imageUrl'], img_save_path, None)
@@ -319,14 +335,13 @@ if __name__ == '__main__':
     
     async def main():
         gen = ProblemGenerate()
-        print(dir(gen))
         
         generate = await gen.generate_to_while(
-            level=2,
-            img_percent=500,
+            level=4,
+            img_percent=200,
             img_save_path='attachments',
             
-            sleep_seconds=5
+            #sleep_seconds=5
         )
         
         print(generate)
