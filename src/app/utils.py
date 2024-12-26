@@ -9,6 +9,8 @@ from loguru import logger
 from asyncio import sleep
 from typing import List, Dict, Optional
 
+from app.models import ProblemModel
+
 # import tracemalloc
 # tracemalloc.start()
 
@@ -212,7 +214,7 @@ class ProblemGenerate:
         return response.json()
     
     
-    async def _save_img(self, url: str, path: str, filename: str) -> str:
+    async def _save_img(self, url: str, path: str, filename: str, lvl: int=0) -> str:
         """ Сохранение изображения текста
 
         Args:
@@ -227,7 +229,7 @@ class ProblemGenerate:
             path += '/'
         
         if filename is None:
-            filename = '%d-%d.png' % (int(time.time()),  random.randint(1000, 10**5))
+            filename = '%d_%s-%d.png' % (lvl, str(int(time.time()))[-6:],  random.randint(1000, 10**5))
         
         response = await self.client.get(url)
         
@@ -258,7 +260,8 @@ class ProblemGenerate:
                 "answer": List[str],
                 "img": {
                     "url": str,
-                    "path": str
+                    "path": str,
+                    filename: str
                 }
             }
         """
@@ -279,7 +282,7 @@ class ProblemGenerate:
         img_data: Dict[str, str] = await self._latext_to_img(data, img_percent)
         
         # Путь к файлу
-        save_path: str = await self._save_img(img_data['imageUrl'], img_save_path, None)
+        save_path: str = await self._save_img(img_data['imageUrl'], img_save_path, None, lvl=level)
         
         
         return_data: Dict[str, str] = data.copy()

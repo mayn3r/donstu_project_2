@@ -10,6 +10,8 @@ class User(Model):
     
     level = fields.IntField(default=0)  # Уровень сложности пользователя
     completed_tasks = fields.IntField(default=0)  # Кол-во решенных задач за все время
+    completed_problems = fields.TextField(null=True)  # ID решенных задач
+
     
     regdate = fields.DatetimeField(auto_now_add=True)  # *Дата регистрации
 
