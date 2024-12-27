@@ -1,3 +1,3 @@
 import os
 
-os.environ["TG_TOKEN"] = "6765019646:AAHgi8z1VYAV4e7PoFgPJwfDHimQscra_No"
+os.environ["TG_TOKEN"] = "7509116710:AAFsg5AQUZz7408_to6F-7rmfJ9EZ8QlKUA"
