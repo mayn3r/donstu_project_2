@@ -9,15 +9,15 @@ class InlineKeyboards:
         
         pass
     
-    def back(self) -> InlineKeyboardMarkup:
-        """  """
+    # def back(self) -> InlineKeyboardMarkup:
+    #     """  """
         
-        keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(text='Назад в меню', callback_data='back_in_menu')
-                ]
-            ]
-        )
+    #     keyboard = InlineKeyboardMarkup(
+    #         inline_keyboard=[
+    #             [
+    #                 InlineKeyboardButton(text='Назад в меню', callback_data='back_in_menu')
+    #             ]
+    #         ]
+    #     )
         
-        return keyboard
+    #     return keyboard

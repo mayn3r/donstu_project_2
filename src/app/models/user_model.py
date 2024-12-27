@@ -9,7 +9,7 @@ class User(Model):
     name = fields.CharField(50)  # Имя пользователя в телеграме
     
     level = fields.IntField(default=0)  # Уровень сложности пользователя
-    completed_tasks = fields.IntField(default=0)  # Кол-во решенных задач за все время
+    completed_tasks = fields.IntField(default=0)  # Кол-во решенных задач за 1 уровень
     completed_problems = fields.TextField(null=True)  # ID решенных задач
 
     

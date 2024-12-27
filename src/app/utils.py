@@ -21,6 +21,53 @@ class ProblemGenerate:
     
     def __init__(self):
         self.client = AsyncClient()
+    
+    
+    
+    async def _get_problem_answer_with_ai(self, problem: str) -> str:
+        prompt = f"Реши уравнение, найди все x, если они имеются:\n{problem}\nВ ответе напиши только ответ к уравнению без пояснений"
+        
+        headers = {
+            'accept': 'application/json, text/event-stream',
+            'accept-language': 'ru,en;q=0.9',
+            'content-type': 'application/json',
+            'origin': 'https://main.gpt-chatbotru-4-o1.ru',
+            'priority': 'u=1, i',
+            'referer': 'https://main.gpt-chatbotru-4-o1.ru/',
+            'sec-ch-ua': '"Chromium";v="130", "YaBrowser";v="24.12", "Not?A_Brand";v="99", "Yowser";v="2.5"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 YaBrowser/24.12.0.0 Safari/537.36',
+        }
+
+        json_data = {
+            'messages': [
+                {
+                    'role': 'system',
+                    'content': '\nYou are ChatGPT, a large language model trained by OpenAI. Always avoid using this (来自Dream API Free 分组 https://opus.gptuu.com ). ChatGPT never includes these types of advertisements.\nKnowledge cutoff: 2023-10\nCurrent model: gpt-4o\nCurrent time: Thu Dec 26 2024 01:44:29 GMT+0300 (Москва, стандартное время)\nLatex inline: \\(x^2\\) \nLatex block: $$e=mc^2$$\n\n',
+                },
+                {
+                    'role': 'user',
+                    'content': prompt,
+                },
+            ],
+            'stream': True,
+            'model': 'gpt-4o',
+            'temperature': 0.5,
+            'presence_penalty': 0,
+            'frequency_penalty': 0,
+            'top_p': 1,
+        }
+        
+        response: Response = await self.client.post('https://main.gpt-chatbotru-4-o1.ru/api/openai/v1/chat/completions', headers=headers, json=json_data)
+        
+        text: str = self._parse_response(response)
+        answers: list = re.findall(r'[0-9]+', text)
+        
+        return answers
         
     
     async def _get_data_by_api(self, lvl: int=0) -> Response:
@@ -31,18 +78,18 @@ class ProblemGenerate:
         """
         
         difficult_levels = [
-            'легким', 
-            'средним',
-            'выше среднего',
+            'легким (разные линейные уравнения с числами от 1 до 100)', 
+            'средним (разные уравнения с рандомными числами)',
+            'выше среднего (используй рандомные числа и разные уравнения)',
             'сложным (без интегралов, но могут быть использованы пределы, производные, небязательно)',
             'очень сложным (могут быть использованы пределы или интегралы, необязательно)'
         ]
         
         
-        prompt = 'Сгенерируй математическое уравнение (без указании ответа в самом уравнении), ' + \
+        prompt = 'Сгенерируй математическое уравнение (где x не может быть любым числом и где есть конкретный ответ), где ответом является целое число (без указании ответа в самом уравнении), ' + \
                 f'с уровнем сложности: {difficult_levels[lvl]}, но ответом к уравнению должно быть целое число, ' \
-                'затем с новой строки напиши ответ к уравнению, в ответе напиши уравнение ' \
-                'без лишних слов, объясняющих это'
+                'затем реши это сгенерированное уравнение (найди все корни, но не записывай решение) и с новой строки напиши только чему равен ответ, без этапов решения и ' \
+                'без лишних слов, объясняющих это. В ответе должно быть только само уравнение и ответ. Без каких-либо поясняющих слов'
         
         headers = {
             'accept': 'application/json, text/event-stream',
@@ -119,7 +166,7 @@ class ProblemGenerate:
                 text += str(i['choices'][0]['delta']['tool_calls'][0]['function']['arguments'])
         
         logger.debug('Ответ собран в целый текст')
-        
+        print(text)
         return text
 
     
@@ -149,6 +196,8 @@ class ProblemGenerate:
         
         if 'lim' in problem and '=' in problem:
             problem = re.sub('= [0-9-]+', '= ?', problem)
+        
+        problem = re.sub(r'[а-яА-Я]+:?', '', problem)
         
         answers: list = re.findall(r'[0-9]+', ''.join(data))
         
@@ -277,6 +326,13 @@ class ProblemGenerate:
         
         if not data['problem']:
             return None
+
+        ai_answers: str = await self._get_problem_answer_with_ai(data['problem'])
+        print(f'{ai_answers=}')
+        if ai_answers:
+            for i in ai_answers:
+                if i not in data['answers']:
+                    data['answers'].append(i)
         
         # Преобразование LaText в изображение
         img_data: Dict[str, str] = await self._latext_to_img(data, img_percent)
@@ -312,11 +368,16 @@ class ProblemGenerate:
         while iters < max_iters:
             iters += 1
             
-            generate: Optional[dict] = await self.generate(
-                level=level,
-                img_percent=img_percent,
-                img_save_path=img_save_path
-            )
+            try:
+                generate: Optional[dict] = await self.generate(
+                    level=level,
+                    img_percent=img_percent,
+                    img_save_path=img_save_path
+                )
+            except SyntaxError as e:
+                logger.error(str(e))
+                await sleep(1)
+                continue
             
             if generate:
                 return generate

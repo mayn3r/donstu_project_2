@@ -1,7 +1,18 @@
 import json
 from cache3 import SafeCache
-from aiogram.types import ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 
 class ReplyKeyboards:
-    pass
+    def example_generate(self):
+        
+        kb = ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(text='Сгенерировать пример')
+                ],
+            ],
+            resize_keyboard=True
+        )
+        
+        return kb
